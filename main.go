@@ -40,7 +40,7 @@ func main() {
 
 	exe = exe + host
 
-	cmd := exec.Command("pantheon-terminal", "-e", exe)
+	cmd := exec.Command("tilix", "-t", sshurl, "-a", "app-new-session", "-e", exe)
 	cmd.Stdout = os.Stdout
 	cmd.Stdin = os.Stdin
 	cmd.Stderr = os.Stderr
