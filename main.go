@@ -2,12 +2,25 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"net/url"
 	"os"
 	"os/exec"
 )
 
+type TermProg struct {
+	name string
+	mkargs func() []string
+}
+
 var sshurl string
+var progs []TermProg = []TermProg{
+	{"st",             func() []string {return []string{"-e"}}},
+	{"tilix",          func() []string {return []string{"-t", sshurl, "-a", "app-new-session", "-e"}}},
+	{"alacritty",      func() []string {return []string{"-e"}}},
+	{"kitty",          func() []string {return []string{"-e"}}},
+	{"gnome-terminal", func() []string {return []string{"--"}}},
+}
 
 func init() {
 	flag.StringVar(&sshurl, "url", "", "SSH URL to login to")
@@ -18,7 +31,7 @@ func main() {
 
 	u, err := url.Parse(sshurl)
 	if err != nil {
-		print(err.Error() + "\n")
+		fmt.Fprintln(os.Stderr, err.Error())
 		os.Exit(1)
 	}
 
@@ -30,17 +43,31 @@ func main() {
 	host, port := u.Hostname(), u.Port()
 	user := u.User.Username()
 
-	exe := "ssh "
+	var prog string = ""
+	var prognames []string
+	var args []string
+	for _, p := range progs {
+		prognames = append(prognames, p.name)
+		_, err := exec.LookPath(p.name)
+		if err == nil {
+			prog, args = p.name, p.mkargs()
+			break
+		}
+	}
+	if prog == "" {
+		fmt.Fprintln(os.Stderr, "no terminal program found, tried", prognames)
+		os.Exit(1)
+	}
+
+	args = append(args, "ssh")
 	if port != "" {
-		exe = exe + "-p " + port + " "
+		args = append(args, "-p", port)
 	}
 	if user != "" {
-		host = user + "@" + host
+		args = append(args, user + "@" + host)
 	}
 
-	exe = exe + host
-
-	cmd := exec.Command("tilix", "-t", sshurl, "-a", "app-new-session", "-e", exe)
+	cmd := exec.Command(prog, args...)
 	cmd.Stdout = os.Stdout
 	cmd.Stdin = os.Stdin
 	cmd.Stderr = os.Stderr
