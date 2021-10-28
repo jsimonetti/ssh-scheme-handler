@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"os"
 	"os/exec"
+	"strings"
 )
 
 type TermProg struct {
@@ -15,6 +16,7 @@ type TermProg struct {
 
 var sshurl string
 var progs []TermProg = []TermProg{
+	{"konsole",        func() []string {return []string{"--new-tab", "--hold", "-e"}}},
 	{"st",             func() []string {return []string{"-e"}}},
 	{"tilix",          func() []string {return []string{"-t", sshurl, "-a", "app-new-session", "-e"}}},
 	{"alacritty",      func() []string {return []string{"-e"}}},
@@ -65,8 +67,13 @@ func main() {
 	}
 	if user != "" {
 		args = append(args, user + "@" + host)
+	} else {
+		args = append(args, host)
 	}
 
+	print("Running ", prog, " ")
+	fmt.Println(strings.Join(args, " "))
+	
 	cmd := exec.Command(prog, args...)
 	cmd.Stdout = os.Stdout
 	cmd.Stdin = os.Stdin
