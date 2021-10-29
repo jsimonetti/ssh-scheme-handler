@@ -6,7 +6,6 @@ import (
 	"net/url"
 	"os"
 	"os/exec"
-	"strings"
 )
 
 type TermProg struct {
@@ -71,9 +70,6 @@ func main() {
 		args = append(args, host)
 	}
 
-	print("Running ", prog, " ")
-	fmt.Println(strings.Join(args, " "))
-	
 	cmd := exec.Command(prog, args...)
 	cmd.Stdout = os.Stdout
 	cmd.Stdin = os.Stdin
